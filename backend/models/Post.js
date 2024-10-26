@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
 
-const PostSchema = new mongoose.Schema({
+const postSchema = new mongoose.Schema({
     title: { type: String, required: true },
-    language: { type: String, required: true },
     codeSnippet: { type: String, required: true },
-    fileName: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now },
-});
+    language: { type: String, required: true },
+    fileUrl: { type: String, required: true },
+    author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+}, { timestamps: true });
 
-module.exports = mongoose.model('Post', PostSchema);
+module.exports = mongoose.model('Post', postSchema);

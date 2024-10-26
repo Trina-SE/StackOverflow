@@ -1,23 +1,25 @@
-// src/components/Notification.js
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import io from 'socket.io-client';
+
+const socket = io('http://localhost:5000');
 
 const Notification = () => {
-  // You will need to manage the notifications state
-  const notifications = []; // Replace with your state management logic
+  const [hasNewNotification, setHasNewNotification] = useState(false);
+
+  useEffect(() => {
+    socket.on('newPost', () => {
+      setHasNewNotification(true);
+    });
+  }, []);
+
+  const handleClick = () => {
+    setHasNewNotification(false);
+  };
 
   return (
-    <div>
-      <button>
-        Notifications {notifications.length > 0 && <span style={{ color: 'red' }}>●</span>}
-      </button>
-      {notifications.length > 0 && (
-        <div>
-          {notifications.map((notif) => (
-            <div key={notif.id}>{notif.title}</div>
-          ))}
-        </div>
-      )}
-    </div>
+    <button onClick={handleClick}>
+      Notification {hasNewNotification && <span className="dot"></span>}
+    </button>
   );
 };
 

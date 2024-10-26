@@ -1,30 +1,30 @@
+// backend/config/minio.js
 const Minio = require('minio');
 
 const minioClient = new Minio.Client({
-    endPoint: process.env.MINIO_ENDPOINT.split(':')[0], // Extract host
-    port: parseInt(process.env.MINIO_ENDPOINT.split(':')[1]), // Extract port
-    useSSL: false, // Set to true if using SSL
-    accessKey: process.env.MINIO_ACCESS_KEY,
-    secretKey: process.env.MINIO_SECRET_KEY,
+    endPoint: '127.0.0.1',      // Your MinIO server’s IP or hostname
+    port: 9000,                 // Use the API port here (default is 9000)
+    useSSL: false,              // Set to true if using HTTPS with MinIO
+    accessKey: process.env.MINIO_ROOT_USER,
+    secretKey: process.env.MINIO_ROOT_PASSWORD,
 });
 
-// Ensure bucket exists
-const bucketName = process.env.BUCKET_NAME;
-minioClient.bucketExists(bucketName, function(err) {
-    if (err) {
-        if (err.code === 'NoSuchBucket') {
-            minioClient.makeBucket(bucketName, '', function(err) {
-                if (err) {
-                    return console.log('Error creating bucket.', err);
-                }
-                console.log(`Bucket ${bucketName} created successfully.`);
-            });
+// Ensure the bucket exists or create it
+const bucketName = process.env.MINIO_BUCKET;
+const ensureBucketExists = async () => {
+    try {
+        const exists = await minioClient.bucketExists(bucketName);
+        if (!exists) {
+            await minioClient.makeBucket(bucketName, 'us-east-1');
+            console.log(`Bucket "${bucketName}" created successfully.`);
         } else {
-            console.log('Error checking bucket:', err);
+            console.log(`Bucket "${bucketName}" already exists.`);
         }
-    } else {
-        console.log(`Bucket ${bucketName} already exists.`);
+    } catch (error) {
+        console.error("Error checking/creating bucket:", error);
     }
-});
+};
+
+ensureBucketExists();
 
 module.exports = minioClient;

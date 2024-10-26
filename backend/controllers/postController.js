@@ -1,48 +1,44 @@
-// controllers/postController.js
+// backend/controllers/postController.js
+const Post = require('../models/Post');
+const minioClient = require('../config/minio');
+const { v4: uuidv4 } = require('uuid');
 
-const Post = require('../models/Post'); // Import the Post model
-const minioClient = require('../config/minio'); // Import the MinIO client
+// Function to create a new post
+exports.createPost = async (req, res) => {
+  const { title, codeSnippet, language } = req.body;
+  const { file } = req;
 
-const createPost = async (req, res) => {
-    try {
-        const { title, language, codeSnippet } = req.body; // Get data from request body
-        const file = req.file; // Get the uploaded file
-
-        if (!file) {
-            return res.status(400).json({ message: 'File is required' });
-        }
-
-        // Validate required fields
-        if (!title || !language || !codeSnippet) {
-            return res.status(400).json({ message: 'Title, language, and code snippet are required' });
-        }
-
-        // Generate a unique file name for the uploaded file
-        const fileName = `${Date.now()}_${file.originalname}`;
-        console.log(`Uploading file to MinIO: ${fileName}`);
-
-        // Upload the file to MinIO
-        await minioClient.putObject(process.env.BUCKET_NAME, fileName, file.buffer, file.size);
-        console.log(`File uploaded to MinIO: ${fileName}`);
-
-        // Create a new post entry
-        const newPost = new Post({
-            title,
-            language,
-            codeSnippet,
-            fileName, // Save the file name
-        });
-
-        // Save the post to MongoDB
-        await newPost.save();
-        console.log('Post saved to MongoDB:', newPost);
-
-        // Send a response back to the client
-        res.status(201).json({ message: 'Post created successfully', post: newPost });
-    } catch (error) {
-        console.error('Error creating post:', error);
-        res.status(500).json({ message: 'Internal server error' });
+  try {
+    let fileUrl = null;
+    if (file) {
+      const fileName = `${uuidv4()}.${language}`;
+      await minioClient.putObject(process.env.MINIO_BUCKET, fileName, file.buffer);
+      fileUrl = fileName;
     }
+
+    const post = new Post({
+      title,
+      codeSnippet,
+      language,
+      fileUrl,
+      author: req.userId,
+    });
+
+    await post.save();
+    res.status(201).json(post);
+    req.app.get('io').emit('newPost', post); // Optional notification
+  } catch (error) {
+    console.error("Error in createPost:", error);
+    res.status(500).json({ error: error.message });
+  }
 };
 
-module.exports = { createPost };
+// Function to get all posts
+exports.getPosts = async (req, res) => {
+  try {
+    const posts = await Post.find().sort({ createdAt: -1 });
+    res.json(posts);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
