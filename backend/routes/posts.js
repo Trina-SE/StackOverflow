@@ -1,6 +1,6 @@
 const express = require('express');
 const { createPost } = require('../controllers/postController');
-const upload = require('../middleware/multerFile');  // Update this line
+const upload = require('../middlewares/multerFile');  // Ensure this path is correct
 
 const router = express.Router();
 
