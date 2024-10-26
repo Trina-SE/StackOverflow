@@ -1,2 +1,2 @@
 # StackOverflow
-This is an academic project
+This is an academic project.
