@@ -1,0 +1,78 @@
+/* src/styles/Dashboard.css */
+
+.dashboard {
+    width: 80%;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .username-box {
+    padding: 10px;
+    background-color: #9b59b6;
+    color: white;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 16px;
+  }
+  
+  .notification-box {
+    position: relative;
+    cursor: pointer;
+  }
+  
+  .notification-dot {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 10px;
+    height: 10px;
+    background-color: red;
+    border-radius: 50%;
+  }
+  
+  .posts-container {
+    margin-top: 20px;
+  }
+  
+  .post-item {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+  }
+  
+  .post-item h3 {
+    margin: 0;
+  }
+  
+  .author-name {
+    color: green;
+    font-style: italic;
+  }
+  
+  .logout-button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .logout-button:hover {
+    background-color: #c0392b;
+  }
+
+  .author-name {
+    color: green;
+    font-style: italic;
+  }
+  

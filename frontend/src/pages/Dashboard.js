@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import API from '../api';
 import PostForm from '../components/PostForm';
 import io from 'socket.io-client';
+import '../styles/Dashboard.css';
 
 const socket = io('http://localhost:5000'); // Connect to the server
 
@@ -11,11 +12,13 @@ const Dashboard = () => {
   const [showPostForm, setShowPostForm] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [showNotificationDot, setShowNotificationDot] = useState(false);
-  const currentUserId = localStorage.getItem('userId'); // Assume userId is stored here
 
+  const username = localStorage.getItem('username');
+  const token = localStorage.getItem('token');
+
+  // Fetch posts from the backend
   const fetchPosts = async () => {
     try {
-      const token = localStorage.getItem('token');
       const { data } = await API.get('/posts', {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -27,20 +30,19 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchPosts();
-    
+
     // Listen for new post notifications
     socket.on('newPostNotification', (notification) => {
-      // Show notification dot if the notification is not from the current user
-      if (notification.author !== currentUserId) {
+      if (notification.authorUsername !== username) {
         setNotifications((prevNotifications) => [notification, ...prevNotifications]);
         setShowNotificationDot(true); // Show the red dot on the notification button
       }
     });
 
     return () => {
-      socket.off('newPostNotification'); // Clean up socket listener
+      socket.off('newPostNotification'); // Cleanup listener on unmount
     };
-  }, [currentUserId]);
+  }, [username]);
 
   const handlePostCreated = () => {
     fetchPosts();
@@ -52,46 +54,42 @@ const Dashboard = () => {
   };
 
   const handleNotificationClick = () => {
-    setShowNotificationDot(false); // Remove red dot when viewed
+    setShowNotificationDot(false);
+    setNotifications([]);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    window.location.href = '/';
   };
 
   return (
-    <div>
-      <h1>Your Dashboard</h1>
-      
-      {/* Notification Button */}
-      <div onClick={handleNotificationClick} style={{ position: 'relative', cursor: 'pointer' }}>
-        <button>Notification</button>
-        {showNotificationDot && (
-          <span style={{ 
-            position: 'absolute', top: '0', right: '0', width: '10px', height: '10px', backgroundColor: 'red', borderRadius: '50%' 
-          }}></span>
-        )}
-        {notifications.length > 0 && (
-          <div style={{ position: 'absolute', top: '20px', right: '0', backgroundColor: 'white', border: '1px solid black', padding: '10px' }}>
-            <h4>New Posts</h4>
-            {notifications.map((notification, index) => (
-              <div key={index}>
-                <p>{notification.title}</p>
-                <span>{new Date(notification.createdAt).toLocaleString()}</span>
-              </div>
-            ))}
-          </div>
-        )}
+    <div className="dashboard">
+      <div className="dashboard-header">
+        <div className="username-box">
+          <span>{username}</span>
+        </div>
+
+        <button onClick={togglePostForm}>Create Post</button>
+
+        <div className="notification-box" onClick={handleNotificationClick}>
+          <button>Notification</button>
+          {showNotificationDot && <span className="notification-dot"></span>}
+        </div>
       </div>
 
-      <button onClick={togglePostForm}>
-        {showPostForm ? 'Close Post Form' : 'Create New Post'}
-      </button>
       {showPostForm && <PostForm onPostCreated={handlePostCreated} />}
 
-      <div>
+      <div className="posts-container">
         <h2>Recent Posts</h2>
         {posts.length > 0 ? (
           posts.map((post) => (
-            <div key={post._id}>
+            <div key={post._id} className="post-item">
+              <p className="author-name">Posted by: {post.authorUsername || "Anonymous"}</p>
               <h3>{post.title}</h3>
-              <p>Language: {post.language}</p>
+              {/* Conditionally render language if it exists */}
+              {post.language && <p>Language: {post.language}</p>}
               {post.codeFileUrl && (
                 <p>
                   Code Snippet File: <a href={post.codeFileUrl} download>Download Code</a>
@@ -108,6 +106,8 @@ const Dashboard = () => {
           <p>No posts available</p>
         )}
       </div>
+
+      <button className="logout-button" onClick={handleLogout}>Logout</button>
     </div>
   );
 };

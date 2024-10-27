@@ -3,7 +3,6 @@ const Post = require('../models/Post');
 const minioClient = require('../config/minio');
 const { v4: uuidv4 } = require('uuid');
 
-// Function to create a new post
 exports.createPost = async (req, res) => {
   const { title, codeSnippet, language } = req.body;
   const file = req.file;
@@ -40,24 +39,18 @@ exports.createPost = async (req, res) => {
       language,
       codeFileUrl,
       uploadedFileUrl,
-      author: req.userId,
+      author: req.userId, // Store the ID of the user who created the post
     });
 
     await post.save();
+
+    // Emit 'newPost' to notify all users except the one who posted
+    const io = req.app.get('io'); // Get io instance
+    io.emit('newPost', { post, authorId: req.userId }); // Include authorId to filter notifications
+
     res.status(201).json(post);
   } catch (error) {
     console.error("Error in createPost:", error);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-// Function to get all posts
-exports.getPosts = async (req, res) => {
-  try {
-    const posts = await Post.find().sort({ createdAt: -1 });
-    res.json(posts);
-  } catch (error) {
-    console.error("Error in getPosts:", error);
     res.status(500).json({ error: error.message });
   }
 };

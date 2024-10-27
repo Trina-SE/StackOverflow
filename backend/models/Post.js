@@ -3,10 +3,11 @@ const mongoose = require('mongoose');
 
 const postSchema = new mongoose.Schema({
   title: { type: String, required: true },
-  language: { type: String, required: true },
-  codeFileUrl: { type: String }, // URL for the code snippet file
-  uploadedFileUrl: { type: String }, // URL for the user-uploaded file
+  language: { type: String, required: false }, // Confirm this is set to false
+  codeFileUrl: { type: String },
+  uploadedFileUrl: { type: String },
   author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  authorUsername: { type: String, required: true },
   createdAt: { type: Date, default: Date.now }
 });
 
