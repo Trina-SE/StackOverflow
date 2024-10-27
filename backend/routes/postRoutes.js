@@ -1,6 +1,6 @@
 // backend/routes/postRoutes.js
 const express = require('express');
-const { createPost, getPosts } = require('../controllers/postController'); // Ensure these functions are correctly imported
+const { createPost, getPosts } = require('../controllers/postController'); // Make sure these are correctly imported
 const authMiddleware = require('../middleware/authMiddleware');
 const upload = require('multer')();
 

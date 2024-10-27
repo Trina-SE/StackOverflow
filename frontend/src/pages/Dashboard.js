@@ -16,46 +16,52 @@ const Dashboard = () => {
   const username = localStorage.getItem('username');
   const token = localStorage.getItem('token');
 
-  // Fetch posts from the backend
-  const fetchPosts = async () => {
+  // Fetch posts and unseen notifications from the backend
+  const fetchPostsAndNotifications = async () => {
     try {
-      const { data } = await API.get('/posts', {
+      const { data: postData } = await API.get('/posts', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setPosts(data);
+      setPosts(postData);
+
+      const { data: unseenNotifications } = await API.get('/notifications/unseen', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (unseenNotifications.length > 0) {
+        setNotifications(unseenNotifications);
+        setShowNotificationDot(true);
+      }
     } catch (error) {
-      console.error('Error fetching posts:', error);
+      console.error('Error fetching posts or notifications:', error);
     }
   };
 
   useEffect(() => {
-    fetchPosts();
+    fetchPostsAndNotifications();
 
-    // Listen for new post notifications
     socket.on('newPostNotification', (notification) => {
       if (notification.authorUsername !== username) {
-        setNotifications((prevNotifications) => [notification, ...prevNotifications]);
-        setShowNotificationDot(true); // Show the red dot on the notification button
+        setNotifications((prev) => [notification, ...prev]);
+        setShowNotificationDot(true);
       }
     });
 
     return () => {
-      socket.off('newPostNotification'); // Cleanup listener on unmount
+      socket.off('newPostNotification');
     };
   }, [username]);
 
   const handlePostCreated = () => {
-    fetchPosts();
+    fetchPostsAndNotifications();
     setShowPostForm(false);
   };
 
-  const togglePostForm = () => {
-    setShowPostForm(!showPostForm);
-  };
-
-  const handleNotificationClick = () => {
+  const handleNotificationClick = async () => {
     setShowNotificationDot(false);
     setNotifications([]);
+    await API.put('/notifications/mark-seen', {}, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
   };
 
   const handleLogout = () => {
@@ -71,7 +77,7 @@ const Dashboard = () => {
           <span>{username}</span>
         </div>
 
-        <button onClick={togglePostForm}>Create Post</button>
+        <button onClick={() => setShowPostForm(!showPostForm)}>Create Post</button>
 
         <div className="notification-box" onClick={handleNotificationClick}>
           <button>Notification</button>
@@ -86,9 +92,8 @@ const Dashboard = () => {
         {posts.length > 0 ? (
           posts.map((post) => (
             <div key={post._id} className="post-item">
-              <p className="author-name">Posted by: {post.authorUsername || "Anonymous"}</p>
+              <p className="author-name">Posted by: {post.author?.username || "Anonymous"}</p>
               <h3>{post.title}</h3>
-              {/* Conditionally render language if it exists */}
               {post.language && <p>Language: {post.language}</p>}
               {post.codeFileUrl && (
                 <p>
