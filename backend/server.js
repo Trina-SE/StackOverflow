@@ -4,18 +4,18 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http');
 const socketIo = require('socket.io');
+const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const postRoutes = require('./routes/postRoutes');
-const notificationRoutes = require('./routes/notificationRoutes'); // Include if you added this route
+const notificationRoutes = require('./routes/notificationRoutes'); // Import notification routes
+const authMiddleware = require('./middleware/authMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB
 connectDB();
 
-// Middleware
 app.use(express.json());
 app.use(cors({
   origin: 'http://localhost:3000',
@@ -23,16 +23,14 @@ app.use(cors({
   credentials: true,
 }));
 
-// Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/posts', postRoutes); // Ensure path is correct
-app.use('/api/notifications', notificationRoutes); // Ensure this is added if needed
+app.use('/api/posts', postRoutes);
+app.use('/api/notifications', notificationRoutes);
 
-// Create HTTP Server and Socket.io
 const server = http.createServer(app);
 const io = socketIo(server, { cors: { origin: 'http://localhost:3000' } });
 
-app.set('io', io); // Make io available in controllers
+app.set('io', io);
 
 io.on('connection', (socket) => {
   console.log('A user connected');
@@ -41,7 +39,6 @@ io.on('connection', (socket) => {
   });
 });
 
-// Start the server
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

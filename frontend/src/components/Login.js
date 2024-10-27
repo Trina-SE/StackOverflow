@@ -14,12 +14,18 @@ const Login = ({ closeForm }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      console.log('Attempting login with:', formData); // Debugging log
+
+      // Send username and password in the request
       const { data } = await API.post('/auth/login', formData);
+      console.log('Login successful, received token:', data.token); // Debugging log
+
       localStorage.setItem('token', data.token);
-      localStorage.setItem('username', formData.username); // Save username to localStorage
+      localStorage.setItem('username', formData.username); // Store username for later use
       alert('Login successful');
       window.location.href = '/dashboard'; // Redirect to dashboard
     } catch (error) {
+      console.error('Login failed:', error.response?.data || error.message);
       setError('Invalid username or password');
     }
   };

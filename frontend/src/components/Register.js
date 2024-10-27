@@ -13,36 +13,32 @@ const Register = ({ closeForm }) => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError(''); // Clear any previous error when user starts typing
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Check if password and confirmPassword match
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match. Please try again.");
       return;
     }
 
     try {
-      // Send registration request
-      const response = await API.post('/auth/register', {
-        username: formData.username,
-        email: formData.email,
-        password: formData.password
-      });
+      const { username, email, password } = formData;
+      const response = await API.post('/auth/register', { username, email, password });
 
-      alert('Registration successful');
-      localStorage.setItem('username', formData.username); // Save username in localStorage
-      window.location.href = '/dashboard'; // Redirect to dashboard on success
-    } catch (error) {
-      if (error.response && error.response.data.error === 'Email already registered') {
-        setError('This email is already registered. Please use a different email.');
+      const { token } = response.data;
+      if (token) {
+        localStorage.setItem('token', token);
+        localStorage.setItem('username', username);
+        window.location.href = '/dashboard';
       } else {
-        console.error('Error in registration:', error);
-        setError('Registration failed. Please try again.');
+        setError('Registration succeeded but no token received. Please log in.');
       }
+    } catch (error) {
+      console.error('Error in registration:', error);
+      setError('Registration failed. Please try again.');
     }
   };
 

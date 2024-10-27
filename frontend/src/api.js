@@ -2,10 +2,10 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:5000/api',  // Ensure this is the correct backend URL
+  baseURL: 'http://localhost:5000/api', // Backend URL
 });
 
-// Automatically add token from localStorage if available
+// Attach token from local storage to every request
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -14,12 +14,11 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
-// Improved Response Interceptor for Better Error Details
+// Improved error handling in response interceptor
 API.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
-      // Display detailed error message
       const message = error.response.data?.error || error.response.data?.message || JSON.stringify(error.response.data);
       console.error(`API Error: ${error.response.status} - ${message}`);
     } else {

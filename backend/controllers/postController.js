@@ -37,11 +37,13 @@ exports.createPost = async (req, res) => {
       uploadedFileUrl = `http://${process.env.MINIO_ENDPOINT}:${process.env.MINIO_PORT}/${process.env.MINIO_BUCKET}/${uploadedFileName}`;
     }
 
+    // Get author information
     const author = await User.findById(req.userId).select('username');
     if (!author) {
       return res.status(400).json({ error: 'Author not found' });
     }
 
+    // Create new post
     const post = new Post({
       title,
       language: language || null,
@@ -49,19 +51,24 @@ exports.createPost = async (req, res) => {
       uploadedFileUrl,
       author: req.userId,
     });
-
     await post.save();
 
-    // Get all users except the post author and create notifications for them
+    // Notify other users
     const otherUsers = await User.find({ _id: { $ne: req.userId } });
     const notifications = otherUsers.map((user) => ({
       userId: user._id,
       postId: post._id,
+      read: false,
     }));
     await Notification.insertMany(notifications);
 
+    // Emit notification to clients
     const io = req.app.get('io');
-    io.emit('newPostNotification', { post, authorUsername: author.username });
+    io.emit('newPostNotification', {
+      postId: post._id,
+      title: post.title,
+      authorUsername: author.username,
+    });
 
     res.status(201).json(post);
   } catch (error) {
@@ -79,6 +86,31 @@ exports.getPosts = async (req, res) => {
     res.json(posts);
   } catch (error) {
     console.error("Error in getPosts:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Function to get unread notifications for a user
+exports.getUnreadNotifications = async (req, res) => {
+  try {
+    const notifications = await Notification.find({ userId: req.userId, read: false })
+      .populate('postId', 'title author')
+      .populate('userId', 'username')
+      .exec();
+    res.json(notifications);
+  } catch (error) {
+    console.error("Error in getUnreadNotifications:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Function to mark notifications as read
+exports.markNotificationsAsRead = async (req, res) => {
+  try {
+    await Notification.updateMany({ userId: req.userId, read: false }, { read: true });
+    res.status(200).json({ message: 'Notifications marked as read' });
+  } catch (error) {
+    console.error("Error in markNotificationsAsRead:", error);
     res.status(500).json({ error: error.message });
   }
 };

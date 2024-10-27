@@ -5,7 +5,7 @@ import PostForm from '../components/PostForm';
 import io from 'socket.io-client';
 import '../styles/Dashboard.css';
 
-const socket = io('http://localhost:5000'); // Connect to the server
+const socket = io('http://localhost:5000');
 
 const Dashboard = () => {
   const [posts, setPosts] = useState([]);
@@ -16,28 +16,32 @@ const Dashboard = () => {
   const username = localStorage.getItem('username');
   const token = localStorage.getItem('token');
 
-  // Fetch posts and unseen notifications from the backend
-  const fetchPostsAndNotifications = async () => {
+  const fetchPosts = async () => {
     try {
-      const { data: postData } = await API.get('/posts', {
+      const { data } = await API.get('/posts', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setPosts(postData);
-
-      const { data: unseenNotifications } = await API.get('/notifications/unseen', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (unseenNotifications.length > 0) {
-        setNotifications(unseenNotifications);
-        setShowNotificationDot(true);
-      }
+      setPosts(data);
     } catch (error) {
-      console.error('Error fetching posts or notifications:', error);
+      console.error('Error fetching posts:', error);
+    }
+  };
+
+  const fetchUnreadNotifications = async () => {
+    try {
+      const { data } = await API.get('/notifications/unread', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications(data);
+      setShowNotificationDot(data.length > 0);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
     }
   };
 
   useEffect(() => {
-    fetchPostsAndNotifications();
+    fetchPosts();
+    fetchUnreadNotifications();
 
     socket.on('newPostNotification', (notification) => {
       if (notification.authorUsername !== username) {
@@ -52,16 +56,17 @@ const Dashboard = () => {
   }, [username]);
 
   const handlePostCreated = () => {
-    fetchPostsAndNotifications();
+    fetchPosts();
     setShowPostForm(false);
   };
 
-  const handleNotificationClick = async () => {
+  const togglePostForm = () => {
+    setShowPostForm((prev) => !prev);
+  };
+
+  const handleNotificationClick = () => {
     setShowNotificationDot(false);
     setNotifications([]);
-    await API.put('/notifications/mark-seen', {}, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
   };
 
   const handleLogout = () => {
@@ -77,7 +82,7 @@ const Dashboard = () => {
           <span>{username}</span>
         </div>
 
-        <button onClick={() => setShowPostForm(!showPostForm)}>Create Post</button>
+        <button onClick={togglePostForm}>Create Post</button>
 
         <div className="notification-box" onClick={handleNotificationClick}>
           <button>Notification</button>
