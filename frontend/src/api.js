@@ -1,8 +1,7 @@
-// src/api.js
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:5000/api', // Backend URL
+  baseURL: 'http://localhost:5000/api',
 });
 
 // Attach token from local storage to every request
@@ -14,7 +13,6 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
-// Improved error handling in response interceptor
 API.interceptors.response.use(
   (response) => response,
   (error) => {
