@@ -105,3 +105,74 @@
 .post-item button:hover {
   background-color: #c33694; /* Darken on hover for better interaction feedback */
 }
+
+/* Style for the notifications prompt */
+.notifications-prompt {
+  position: absolute;
+  top: 70px; /* Adjust this to position below the notification button */
+  right: 20px;
+  background-color: #fff3f3;
+  padding: 10px;
+  border: 1px solid #ff3333;
+  border-radius: 8px;
+  color: #000;
+}
+
+/* Style for each notification item */
+.notification-item {
+  margin-bottom: 8px;
+}
+
+/* Red color for unread notifications */
+.notification-unread {
+  color: red;
+}
+
+/* Green color for read notifications */
+.notification-read {
+  color: green;
+}
+
+/* Light yellow box for expanded post details */
+.post-details {
+  background-color: #fff8d1;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+}
+.notifications-prompt {
+  position: absolute;
+  top: 70px;
+  right: 20px;
+  background-color: #fff3f3;
+  padding: 10px;
+  border: 1px solid #ff3333;
+  border-radius: 8px;
+  color: #000;
+}
+
+.notification-item {
+  margin-bottom: 8px;
+}
+
+/* Red color for unread notifications */
+.notification-author.unread {
+  color: red;
+}
+
+/* Green color for read notifications */
+.notification-author.read {
+  color: green;
+}
+
+.close-prompt-button {
+  margin-top: 10px;
+  padding: 5px 10px;
+  background-color: #eb8108;
+  border: none;
+  cursor: pointer;
+}
+
+.close-prompt-button:hover {
+  background-color: #aac41c;
+}

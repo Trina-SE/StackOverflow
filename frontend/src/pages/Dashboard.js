@@ -12,8 +12,9 @@ const Dashboard = () => {
   const [showPostForm, setShowPostForm] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [showNotificationDot, setShowNotificationDot] = useState(false);
-  const [expandedPostId, setExpandedPostId] = useState(null); // Track the ID of the expanded post
-  const [expandedPostContent, setExpandedPostContent] = useState(null); // Store content of the expanded post
+  const [expandedPostId, setExpandedPostId] = useState(null);
+  const [expandedPostContent, setExpandedPostContent] = useState(null);
+  const [showNotificationsPrompt, setShowNotificationsPrompt] = useState(false);
 
   const username = localStorage.getItem('username');
   const token = localStorage.getItem('token');
@@ -34,8 +35,8 @@ const Dashboard = () => {
       const { data } = await API.get('/notifications/unread', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setNotifications(data);
-      setShowNotificationDot(data.length > 0);
+      setNotifications(data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+      setShowNotificationDot(data.some((notif) => !notif.read));
     } catch (error) {
       console.error("Error fetching notifications:", error);
     }
@@ -66,31 +67,50 @@ const Dashboard = () => {
     setShowPostForm((prev) => !prev);
   };
 
-  const handleNotificationClick = () => {
-    setShowNotificationDot(false);
-    setNotifications([]);
+  const toggleNotificationsPrompt = () => {
+    setShowNotificationsPrompt((prev) => !prev);
+  };
+
+  // src/pages/Dashboard.js
+const markNotificationAsRead = async (notificationId) => {
+  try {
+    await API.patch(`/notifications/${notificationId}/read`, {}, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setNotifications((prev) =>
+      prev.map((notif) =>
+        notif._id === notificationId ? { ...notif, read: true } : notif
+      )
+    );
+    setShowNotificationDot(notifications.some((notif) => !notif.read));
+  } catch (error) {
+    console.error("Error marking notification as read:", error);
+  }
+};
+  const handleViewPostFromNotification = async (postId, notificationId) => {
+    handleViewPost(postId);
+    await markNotificationAsRead(notificationId);
+  };
+
+  const handleViewPost = async (postId) => {
+    if (expandedPostId === postId) {
+      setExpandedPostId(null);
+      setExpandedPostContent(null);
+    } else {
+      try {
+        const { data } = await API.get(`/posts/${postId}`);
+        setExpandedPostId(postId);
+        setExpandedPostContent(data);
+      } catch (error) {
+        console.error("Error fetching post details:", error);
+      }
+    }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('username');
     window.location.href = '/';
-  };
-
-  const handleViewPost = async (postId) => {
-    if (expandedPostId === postId) {
-      // Collapse the post details if it's already expanded
-      setExpandedPostId(null);
-      setExpandedPostContent(null);
-    } else {
-      try {
-        const { data } = await API.get(`/posts/${postId}`);
-        setExpandedPostId(postId); // Store only the post ID
-        setExpandedPostContent(data); // Set the content of the expanded post
-      } catch (error) {
-        console.error("Error fetching post details:", error);
-      }
-    }
   };
 
   return (
@@ -102,13 +122,48 @@ const Dashboard = () => {
 
         <button onClick={togglePostForm}>Create Post</button>
 
-        <div className="notification-box" onClick={handleNotificationClick}>
-          <button>Notification</button>
+        <div className="notification-box">
+          <button onClick={toggleNotificationsPrompt}>Notification</button>
           {showNotificationDot && <span className="notification-dot"></span>}
         </div>
       </div>
 
       {showPostForm && <PostForm onPostCreated={handlePostCreated} />}
+
+      {showNotificationsPrompt && (
+        <div className="notifications-prompt">
+          <h4>Unread Notifications</h4>
+          {notifications.length > 0 ? (
+            notifications.map((notification) => (
+              <div
+                key={notification._id}
+                className={`notification-item ${
+                  notification.read ? 'notification-read' : 'notification-unread'
+                }`}
+              >
+                <p className={`notification-author ${notification.read ? 'read' : 'unread'}`}>
+                  Posted by: {notification.postId.author?.username || "Author Unknown"}
+                </p>
+                <button
+                  onClick={() =>
+                    handleViewPostFromNotification(
+                      notification.postId._id,
+                      notification._id
+                    )
+                  }
+                >
+                  View Post
+                </button>
+              </div>
+            ))
+          ) : (
+            <p>No unread notifications</p>
+          )}
+          <button onClick={toggleNotificationsPrompt} className="close-prompt-button">
+            Close
+          </button>
+        </div>
+      )}
 
       <div className="posts-container">
         <h2>Recent Posts</h2>
@@ -117,18 +172,15 @@ const Dashboard = () => {
             <div key={post._id} className="post-item">
               <p className="author-name">Posted by: {post.author?.username || "Anonymous"}</p>
               <h3>{post.title}</h3>
-              <br></br>
               <button onClick={() => handleViewPost(post._id)}>
                 {expandedPostId === post._id ? "Hide Post" : "View Post"}
               </button>
 
-              {/* Display expanded post details if this post is selected */}
               {expandedPostId === post._id && expandedPostContent && (
                 <div className="post-details">
                   <h4><u>Post Details:</u></h4>
                   <p><u><strong>Language:</strong> {expandedPostContent.post.language || 'N/A'}</u></p>
                   
-                  {/* Display code snippet content if available */}
                   {expandedPostContent.codeContent && (
                     <div>
                       <strong><u>Code Snippet:</u></strong>
@@ -136,7 +188,6 @@ const Dashboard = () => {
                     </div>
                   )}
 
-                  {/* Display uploaded file content if available */}
                   {expandedPostContent.uploadedFileContent && (
                     <div>
                       <strong><u>Uploaded File Content:</u></strong>
