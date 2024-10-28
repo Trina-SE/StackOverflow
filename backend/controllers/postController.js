@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Notification = require('../models/Notification');
 const minioClient = require('../config/minio');
 const { v4: uuidv4 } = require('uuid');
+const streamToString = require('stream-to-string'); // Ensure this is installed by running: npm install stream-to-string
 
 // Function to create a new post
 exports.createPost = async (req, res) => {
@@ -82,7 +83,7 @@ exports.getPosts = async (req, res) => {
   try {
     const posts = await Post.find()
       .sort({ createdAt: -1 })
-      .populate('author', 'username'); // Populate author to show the username in the post
+      .populate('author', 'username');
     res.json(posts);
   } catch (error) {
     console.error("Error in getPosts:", error);
@@ -90,27 +91,39 @@ exports.getPosts = async (req, res) => {
   }
 };
 
-// Function to get unread notifications for a user
-exports.getUnreadNotifications = async (req, res) => {
+// Function to get a specific post by ID, including file content from MinIO
+exports.getPostById = async (req, res) => {
+  const { postId } = req.params;
   try {
-    const notifications = await Notification.find({ userId: req.userId, read: false })
-      .populate('postId', 'title author')
-      .populate('userId', 'username')
-      .exec();
-    res.json(notifications);
-  } catch (error) {
-    console.error("Error in getUnreadNotifications:", error);
-    res.status(500).json({ error: error.message });
-  }
-};
+    const post = await Post.findById(postId).populate('author', 'username');
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
 
-// Function to mark notifications as read
-exports.markNotificationsAsRead = async (req, res) => {
-  try {
-    await Notification.updateMany({ userId: req.userId, read: false }, { read: true });
-    res.status(200).json({ message: 'Notifications marked as read' });
+    let codeContent = null;
+    let uploadedFileContent = null;
+
+    // Retrieve code file content if available
+    if (post.codeFileUrl) {
+      const codeFileName = post.codeFileUrl.split('/').pop();
+      const codeFileStream = await minioClient.getObject(process.env.MINIO_BUCKET, codeFileName);
+      codeContent = await streamToString(codeFileStream);
+    }
+
+    // Retrieve uploaded file content if available
+    if (post.uploadedFileUrl) {
+      const uploadedFileName = post.uploadedFileUrl.split('/').pop();
+      const uploadedFileStream = await minioClient.getObject(process.env.MINIO_BUCKET, uploadedFileName);
+      uploadedFileContent = await streamToString(uploadedFileStream);
+    }
+
+    res.json({
+      post,
+      codeContent,
+      uploadedFileContent,
+    });
   } catch (error) {
-    console.error("Error in markNotificationsAsRead:", error);
+    console.error("Error in getPostById:", error);
     res.status(500).json({ error: error.message });
   }
 };

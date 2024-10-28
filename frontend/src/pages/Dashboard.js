@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import API from '../api';
 import PostForm from '../components/PostForm';
+import PostDetailsModal from '../components/PostDetailsModal';
 import io from 'socket.io-client';
 import '../styles/Dashboard.css';
 
@@ -12,6 +13,7 @@ const Dashboard = () => {
   const [showPostForm, setShowPostForm] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [showNotificationDot, setShowNotificationDot] = useState(false);
+  const [selectedPost, setSelectedPost] = useState(null); // State to track selected post for modal
 
   const username = localStorage.getItem('username');
   const token = localStorage.getItem('token');
@@ -75,6 +77,19 @@ const Dashboard = () => {
     window.location.href = '/';
   };
 
+  const handleViewPost = async (postId) => {
+    try {
+      const { data } = await API.get(`/posts/${postId}`);
+      setSelectedPost(data); // Set the selected post data for modal display
+    } catch (error) {
+      console.error("Error fetching post details:", error);
+    }
+  };
+
+  const closeModal = () => {
+    setSelectedPost(null);
+  };
+
   return (
     <div className="dashboard">
       <div className="dashboard-header">
@@ -100,22 +115,22 @@ const Dashboard = () => {
               <p className="author-name">Posted by: {post.author?.username || "Anonymous"}</p>
               <h3>{post.title}</h3>
               {post.language && <p>Language: {post.language}</p>}
-              {post.codeFileUrl && (
-                <p>
-                  Code Snippet File: <a href={post.codeFileUrl} download>Download Code</a>
-                </p>
-              )}
-              {post.uploadedFileUrl && (
-                <p>
-                  Uploaded File: <a href={post.uploadedFileUrl} download>Download File</a>
-                </p>
-              )}
+              <button onClick={() => handleViewPost(post._id)}>View Post</button> {/* View Post Button */}
             </div>
           ))
         ) : (
           <p>No posts available</p>
         )}
       </div>
+
+      {selectedPost && (
+        <PostDetailsModal
+          post={selectedPost.post}
+          codeContent={selectedPost.codeContent}
+          fileContent={selectedPost.uploadedFileContent}
+          onClose={closeModal}
+        />
+      )}
 
       <button className="logout-button" onClick={handleLogout}>Logout</button>
     </div>
