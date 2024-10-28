@@ -1,31 +1,31 @@
+// backend/controllers/authController.js
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 
-// Registration Controller
 exports.register = async (req, res) => {
   const { username, email, password } = req.body;
-
   try {
-    // Check if the user already exists
-    let user = await User.findOne({ email });
-    if (user) {
-      return res.status(400).json({ error: 'Email already registered' });
-    }
-
-    // Create and save the new user
-    user = new User({
-      username,
-      email,
-      password, // Directly save the password in string format as requested
-    });
+    const user = new User({ username, email, password });
     await user.save();
-
-    // Generate a token to log the user in immediately
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
     res.status(201).json({ token });
   } catch (error) {
-    console.error('Error during registration:', error);
+    console.error("Error in register function:", error);
+    res.status(500).json({ error: 'Server error. Please try again later.' });
+  }
+};
+
+exports.login = async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const user = await User.findOne({ username });
+    if (!user || user.password !== password) {
+      return res.status(400).json({ error: 'Invalid credentials' });
+    }
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.status(200).json({ token });
+  } catch (error) {
+    console.error("Error in login function:", error);
     res.status(500).json({ error: 'Server error. Please try again later.' });
   }
 };
