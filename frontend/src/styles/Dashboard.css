@@ -75,3 +75,33 @@
   color: green;
   font-style: italic;
 }
+/* src/styles/Dashboard.css */
+.post-item {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 5px;
+}
+
+.post-details {
+  background-color: #e6ffe6; /* Light green for inline post details */
+  padding: 15px;
+  margin-top: 10px;
+  border-radius: 5px;
+  border: 1px solid #b3e6b3;
+}
+
+.post-item button {
+  padding: 4px 8px; /* Reduces padding for a smaller button size */
+  font-size: 0.875rem; /* Adjusts font size to make the text slightly smaller */
+  border-radius: 4px; /* Rounds the corners slightly */
+  background-color: #614caf; /* Example background color, adjust as needed */
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.post-item button:hover {
+  background-color: #c33694; /* Darken on hover for better interaction feedback */
+}

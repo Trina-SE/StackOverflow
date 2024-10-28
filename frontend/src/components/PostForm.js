@@ -65,14 +65,14 @@ const PostForm = ({ onPostCreated }) => {
       <label>Code Snippet</label>
       <textarea
         name="codeSnippet"
-        placeholder="Code Snippet (Optional)"
+        placeholder="Code Snippet"
         value={formData.codeSnippet}
         onChange={handleChange}
       />
 
       <label>Language</label>
       <select name="language" value={formData.language} onChange={handleChange}>
-        <option value="">Select Language (Optional)</option>
+        <option value="">Select Language</option>
         <option value="javascript">JavaScript</option>
         <option value="python">Python</option>
         <option value="cpp">C++</option>
