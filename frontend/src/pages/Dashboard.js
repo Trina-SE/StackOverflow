@@ -71,22 +71,24 @@ const Dashboard = () => {
     setShowNotificationsPrompt((prev) => !prev);
   };
 
-  // src/pages/Dashboard.js
-const markNotificationAsRead = async (notificationId) => {
-  try {
-    await API.patch(`/notifications/${notificationId}/read`, {}, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setNotifications((prev) =>
-      prev.map((notif) =>
-        notif._id === notificationId ? { ...notif, read: true } : notif
-      )
-    );
-    setShowNotificationDot(notifications.some((notif) => !notif.read));
-  } catch (error) {
-    console.error("Error marking notification as read:", error);
-  }
-};
+  const markNotificationAsRead = async (notificationId) => {
+    try {
+      await API.patch(`/notifications/${notificationId}/read`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications((prev) =>
+        prev.map((notif) =>
+          notif._id === notificationId ? { ...notif, read: true } : notif
+        )
+      );
+
+      // Check if all notifications are read
+      setShowNotificationDot(notifications.some((notif) => !notif.read));
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  };
+
   const handleViewPostFromNotification = async (postId, notificationId) => {
     handleViewPost(postId);
     await markNotificationAsRead(notificationId);
@@ -137,11 +139,9 @@ const markNotificationAsRead = async (notificationId) => {
             notifications.map((notification) => (
               <div
                 key={notification._id}
-                className={`notification-item ${
-                  notification.read ? 'notification-read' : 'notification-unread'
-                }`}
+                className={`notification-item ${notification.read ? 'notification-read' : 'notification-unread'}`}
               >
-                <p className={`notification-author ${notification.read ? 'read' : 'unread'}`}>
+                <p className={`posted-by ${notification.read ? 'posted-by-read' : ''}`}>
                   Posted by: {notification.postId.author?.username || "Author Unknown"}
                 </p>
                 <button
@@ -151,6 +151,7 @@ const markNotificationAsRead = async (notificationId) => {
                       notification._id
                     )
                   }
+                  className={`view-post-button ${notification.read ? 'view-post-button-read' : ''}`}
                 >
                   View Post
                 </button>
@@ -172,6 +173,7 @@ const markNotificationAsRead = async (notificationId) => {
             <div key={post._id} className="post-item">
               <p className="author-name">Posted by: {post.author?.username || "Anonymous"}</p>
               <h3>{post.title}</h3>
+              <br></br>
               <button onClick={() => handleViewPost(post._id)}>
                 {expandedPostId === post._id ? "Hide Post" : "View Post"}
               </button>

@@ -140,29 +140,44 @@
   margin-top: 10px;
   border-radius: 8px;
 }
+/* src/styles/Dashboard.css */
+
+.post-item {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 5px;
+}
+
 .notifications-prompt {
   position: absolute;
-  top: 70px;
-  right: 20px;
-  background-color: #fff3f3;
+  top: 50px;
+  right: 10px;
+  background-color: #f9f9f9;
+  border: 1px solid #ccc;
   padding: 10px;
-  border: 1px solid #ff3333;
-  border-radius: 8px;
-  color: #000;
+  width: 250px;
 }
 
 .notification-item {
   margin-bottom: 8px;
 }
 
-/* Red color for unread notifications */
-.notification-author.unread {
+.notification-unread .posted-by, 
+.notification-unread .view-post-button {
   color: red;
 }
 
-/* Green color for read notifications */
-.notification-author.read {
+.notification-read .posted-by, 
+.notification-read .view-post-button {
   color: green;
+}
+
+.view-post-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
 }
 
 .close-prompt-button {
