@@ -1,4 +1,3 @@
-// src/pages/Dashboard.js
 import React, { useEffect, useState } from 'react';
 import API from '../api';
 import PostForm from '../components/PostForm';
@@ -46,6 +45,11 @@ const Dashboard = () => {
     fetchPosts();
     fetchUnreadNotifications();
 
+    const intervalId = setInterval(() => {
+      fetchPosts();
+      fetchUnreadNotifications();
+    }, 2000); // Auto-refresh every 2 seconds
+
     socket.on('newPostNotification', (notification) => {
       if (notification.authorUsername !== username) {
         setNotifications((prev) => [notification, ...prev]);
@@ -54,6 +58,7 @@ const Dashboard = () => {
     });
 
     return () => {
+      clearInterval(intervalId); // Clean up interval on component unmount
       socket.off('newPostNotification');
     };
   }, [username]);
@@ -81,10 +86,7 @@ const Dashboard = () => {
           notif._id === notificationId ? { ...notif, read: true } : notif
         )
       );
-      
-      // Check if all notifications are now marked as read
-      const hasUnreadNotifications = notifications.some((notif) => !notif.read);
-      setShowNotificationDot(hasUnreadNotifications);
+      setShowNotificationDot(notifications.some((notif) => !notif.read));
     } catch (error) {
       console.error("Error marking notification as read:", error);
     }
@@ -140,9 +142,11 @@ const Dashboard = () => {
             notifications.map((notification) => (
               <div
                 key={notification._id}
-                className={`notification-item ${notification.read ? 'notification-read' : 'notification-unread'}`}
+                className={`notification-item ${
+                  notification.read ? 'notification-read' : 'notification-unread'
+                }`}
               >
-                <p className={`posted-by ${notification.read ? 'posted-by-read' : ''}`}>
+                <p style={{ color: notification.read ? 'green' : 'red' }}>
                   Posted by: {notification.postId.author?.username || "Author Unknown"}
                 </p>
                 <button
@@ -152,7 +156,6 @@ const Dashboard = () => {
                       notification._id
                     )
                   }
-                  className={`view-post-button ${notification.read ? 'view-post-button-read' : ''}`}
                 >
                   View Post
                 </button>
@@ -174,7 +177,7 @@ const Dashboard = () => {
             <div key={post._id} className="post-item">
               <p className="author-name">Posted by: {post.author?.username || "Anonymous"}</p>
               <h3>{post.title}</h3>
-              <br></br>
+              <br />
               <button onClick={() => handleViewPost(post._id)}>
                 {expandedPostId === post._id ? "Hide Post" : "View Post"}
               </button>
