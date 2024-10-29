@@ -81,9 +81,10 @@ const Dashboard = () => {
           notif._id === notificationId ? { ...notif, read: true } : notif
         )
       );
-
-      // Check if all notifications are read
-      setShowNotificationDot(notifications.some((notif) => !notif.read));
+      
+      // Check if all notifications are now marked as read
+      const hasUnreadNotifications = notifications.some((notif) => !notif.read);
+      setShowNotificationDot(hasUnreadNotifications);
     } catch (error) {
       console.error("Error marking notification as read:", error);
     }

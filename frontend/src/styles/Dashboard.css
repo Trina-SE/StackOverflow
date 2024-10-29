@@ -106,88 +106,90 @@
   background-color: #c33694; /* Darken on hover for better interaction feedback */
 }
 
-/* Style for the notifications prompt */
+/* Enhanced Notification Prompt as a Card/Dialog Box */
 .notifications-prompt {
   position: absolute;
-  top: 70px; /* Adjust this to position below the notification button */
-  right: 20px;
-  background-color: #fff3f3;
-  padding: 10px;
-  border: 1px solid #ff3333;
-  border-radius: 8px;
-  color: #000;
+  top: 90px; /* Position slightly below the notification button */
+  right: 10px;
+  background-color: #ffffff;
+  padding: 15px 20px;
+  width: 300px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  border: 1px solid #ddd;
+  color: #333;
+  z-index: 100;
+  transition: all 0.3s ease;
+}
+
+/* Title for the notification prompt */
+.notifications-prompt h4 {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin: 0 0 10px 0;
+  color: #333;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 8px;
 }
 
 /* Style for each notification item */
 .notification-item {
-  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 0.9rem;
 }
 
-/* Red color for unread notifications */
-.notification-unread {
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-unread p,
+.notification-read p {
+  margin: 0;
+}
+
+.notification-unread p {
   color: red;
 }
 
-/* Green color for read notifications */
-.notification-read {
+.notification-read p {
   color: green;
 }
 
-/* Light yellow box for expanded post details */
-.post-details {
-  background-color: #fff8d1;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 8px;
-}
-/* src/styles/Dashboard.css */
-
-.post-item {
-  border: 1px solid #ccc;
-  padding: 10px;
-  margin-bottom: 15px;
+/* Style the "View Post" button */
+.notification-item button {
+  padding: 4px 10px;
+  font-size: 0.85rem;
   border-radius: 5px;
-}
-
-.notifications-prompt {
-  position: absolute;
-  top: 50px;
-  right: 10px;
-  background-color: #f9f9f9;
-  border: 1px solid #ccc;
-  padding: 10px;
-  width: 250px;
-}
-
-.notification-item {
-  margin-bottom: 8px;
-}
-
-.notification-unread .posted-by, 
-.notification-unread .view-post-button {
-  color: red;
-}
-
-.notification-read .posted-by, 
-.notification-read .view-post-button {
-  color: green;
-}
-
-.view-post-button {
-  background: none;
+  background-color: #6c5ce7;
+  color: white;
   border: none;
   cursor: pointer;
-  text-decoration: underline;
+  transition: background-color 0.3s ease;
 }
 
+.notification-item button:hover {
+  background-color: rgb(66, 131, 169);
+}
+
+/* Style for the Close button in the notification prompt */
 .close-prompt-button {
   margin-top: 10px;
-  padding: 5px 10px;
-  background-color: #eb8108;
+  padding: 8px 15px;
+  width: 100%;
+  background-color: #eb5757;
+  color: white;
   border: none;
+  border-radius: 8px;
   cursor: pointer;
+  font-weight: bold;
+  font-size: 0.95rem;
+  transition: background-color 0.3s ease;
 }
 
 .close-prompt-button:hover {
-  background-color: #aac41c;
+  background-color: #c44141;
 }
