@@ -74,6 +74,7 @@ const PostForm = ({ onPostCreated }) => {
       <select name="language" value={formData.language} onChange={handleChange}>
         <option value="">Select Language</option>
         <option value="javascript">JavaScript</option>
+        <option value="dart">Dart</option>
         <option value="python">Python</option>
         <option value="cpp">C++</option>
         <option value="java">Java</option>
