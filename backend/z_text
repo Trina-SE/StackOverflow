@@ -1,1 +1,2 @@
+Go to C drive then minio folder then open in terminal. then give this command
 .\minio.exe server C:\minio --console-address :9001
