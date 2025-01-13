@@ -1,10 +1,9 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost/api',
 });
 
-// Attach token from local storage to every request
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -17,8 +16,7 @@ API.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
-      const message = error.response.data?.error || error.response.data?.message || JSON.stringify(error.response.data);
-      console.error(`API Error: ${error.response.status} - ${message}`);
+      console.error(`API Error: ${error.response.status} - ${error.response.data.error || error.message}`);
     } else {
       console.error('API Error:', error.message);
     }
