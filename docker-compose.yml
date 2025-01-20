@@ -1,6 +1,31 @@
 version: '3.8'
 
 services:
+  mongo:
+    image: mongo:5.0
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - stackoverflow-network
+
+  minio:
+    image: minio/minio
+    container_name: minio
+    command: server /data
+    ports:
+      - "9002:9000"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    networks:
+      - stackoverflow-network
+
   user-service:
     build:
       context: ./user-service/backend
@@ -8,13 +33,13 @@ services:
     ports:
       - "4000:4000"
     environment:
-      MONGO_URI: mongodb://mongo:27017/stack_users
+      MONGO_URI: mongodb+srv://sultanatrina4209:x8coPVxjajSZc0El@cluster0.pmn1y.mongodb.net/stack_users?retryWrites=true&w=majority
       JWT_SECRET: trina
-    volumes:
-      - ./user-service/backend:/usr/src/app
-      - /usr/src/app/node_modules
+      PORT: 4000
     depends_on:
       - mongo
+    networks:
+      - stackoverflow-network
 
   post-service:
     build:
@@ -23,19 +48,19 @@ services:
     ports:
       - "4001:4001"
     environment:
-      MONGO_URI: mongodb://mongo:27017/stack_posts
+      MONGO_URI: mongodb+srv://sultanatrina4209:x8coPVxjajSZc0El@cluster0.pmn1y.mongodb.net/stack_posts?retryWrites=true&w=majority
       MINIO_ENDPOINT: minio
-      MINIO_PORT: 9000
+      MINIO_PORT: 9002
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
       MINIO_BUCKET: stack
       JWT_SECRET: trina
-    volumes:
-      - ./post-service/backend:/usr/src/app
-      - /usr/src/app/node_modules
+      PORT: 4001
     depends_on:
       - mongo
       - minio
+    networks:
+      - stackoverflow-network
 
   notification-service:
     build:
@@ -44,61 +69,30 @@ services:
     ports:
       - "4002:4002"
     environment:
-      MONGO_URI: mongodb://mongo:27017/stack_notifications
+      MONGO_URI: mongodb+srv://sultanatrina4209:x8coPVxjajSZc0El@cluster0.pmn1y.mongodb.net/stack_notifications?retryWrites=true&w=majority
       JWT_SECRET: trina
-    volumes:
-      - ./notification-service/backend:/usr/src/app
-      - /usr/src/app/node_modules
+      PORT: 4002
     depends_on:
       - mongo
-
-  frontend:
-    build:
-      context: ./frontend
-    container_name: frontend
-    ports:
-      - "3000:3000"
-    environment:
-      REACT_APP_API_URL: http://localhost/api
-    volumes:
-      - ./frontend:/usr/src/app
-      - /usr/src/app/node_modules
-    stdin_open: true
-    tty: true
+    networks:
+      - stackoverflow-network
 
   nginx:
-    build: ./nginx
+    build:
+      context: ./nginx
     container_name: nginx
     ports:
       - "80:80"
-    volumes:
-      - ./nginx:/etc/nginx/conf.d
     depends_on:
       - user-service
       - post-service
       - notification-service
-      - frontend
-
-  mongo:
-    image: mongo:5.0
-    container_name: mongo
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
-
-  minio:
-    image: minio/minio
-    container_name: minio
-    ports:
-      - "9002:9000"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    command: server /data
-    volumes:
-      - minio-data:/data
+    networks:
+      - stackoverflow-network
 
 volumes:
   mongo-data:
-  minio-data:
+
+networks:
+  stackoverflow-network:
+    driver: bridge

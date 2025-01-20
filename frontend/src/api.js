@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost/api',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost/api', // Unified Nginx endpoint
 });
 
 API.interceptors.request.use((config) => {
@@ -16,7 +16,11 @@ API.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
-      console.error(`API Error: ${error.response.status} - ${error.response.data.error || error.message}`);
+      console.error(
+        `API Error: ${error.response.status} - ${
+          error.response.data.error || error.message
+        }`
+      );
     } else {
       console.error('API Error:', error.message);
     }
