@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost/api', // Unified Nginx endpoint
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:90/api', // Unified Nginx endpoint
 });
 
 API.interceptors.request.use((config) => {

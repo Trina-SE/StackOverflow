@@ -4,7 +4,7 @@ import PostForm from '../components/PostForm';
 import io from 'socket.io-client';
 import '../styles/Dashboard.css';
 
-const socket = io('http://localhost');
+const socket = io('http://localhost:5000');
 
 const Dashboard = () => {
   const [posts, setPosts] = useState([]);
