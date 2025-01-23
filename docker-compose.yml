@@ -56,6 +56,8 @@ services:
       MINIO_BUCKET: stack
       JWT_SECRET: trina
       PORT: 4001
+      USER_SERVICE_URL: http://user-service:4000
+      NOTIFICATION_SERVICE_URL: http://notification-service:4002
     depends_on:
       - mongo
       - minio

@@ -7,6 +7,7 @@ const postSchema = new mongoose.Schema({
   uploadedFileUrl: { type: String },
   author: { type: mongoose.Schema.Types.ObjectId, required: true },
   createdAt: { type: Date, default: Date.now },
+  // authorUsername: { type: String, required: true }, // Include author's username
 });
 
 module.exports = mongoose.model('Post', postSchema);
