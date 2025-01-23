@@ -5,7 +5,7 @@ const cors = require('cors');
 const Minio = require('minio');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4001;
 
 // Middleware
 app.use(cors({

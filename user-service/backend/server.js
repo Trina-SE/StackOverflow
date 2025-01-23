@@ -1,26 +1,44 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const dotenv = require('dotenv');
-
-dotenv.config();
+const http = require('http');
+const socketIo = require('socket.io');
 
 const app = express();
+const PORT = process.env.PORT || 4000;
+
+// Middleware
 app.use(cors({
-  origin: 'http://localhost:3000', // Allow requests from your frontend
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed methods
-  credentials: true, // Allow credentials (if needed)
+  origin: 'http://localhost:3000', // Frontend origin
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
 }));
 app.use(express.json());
 
-// MongoDB connection
+// MongoDB Connection
 mongoose
   .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('Connected to MongoDB'))
+  .then(() => console.log('User Service: MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
-// Routes
-app.use('/api/auth', require('./routes/authRoutes')); // Example route for `user-service`
+// WebSocket Setup
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST'],
+  },
+});
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Service running on port ${PORT}`));
+io.on('connection', (socket) => {
+  console.log('New WebSocket connection');
+});
+
+// Routes
+app.use('/api/auth', require('./routes/authRoutes'));
+
+// Start Server
+server.listen(PORT, () => {
+  console.log(`User Service running on port ${PORT}`);
+});
