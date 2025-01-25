@@ -1,3 +1,4 @@
+//frontend/post-service/backend/controllers/postController.js
 const Post = require('../models/Post');
 const axios = require('axios'); // For inter-service communication
 const minioClient = require('../config/minio');

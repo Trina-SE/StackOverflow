@@ -1,3 +1,4 @@
+//notification-service/backend/routes/notificationRoutes.js
 const express = require('express');
 const {
   getUnreadNotifications,
@@ -12,7 +13,7 @@ const router = express.Router();
 router.get('/unread', authMiddleware, getUnreadNotifications);
 
 // Route to mark a notification as read
-router.patch('/:notificationId/read', authMiddleware, markNotificationAsRead);
+
 
 // Route to create notifications for a new post
 router.post('/notify', createNotifications);

@@ -8,7 +8,15 @@ module.exports = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Verify using inter-service JWT secret
+    const decoded = jwt.verify(token, process.env.INTER_SERVICE_JWT_SECRET);
+    
+    // If it's a service token, allow access
+    if (decoded.service) {
+      return next();
+    }
+
+    // Regular user token verification
     req.userId = decoded.userId;
     next();
   } catch (err) {

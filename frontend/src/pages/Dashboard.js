@@ -5,7 +5,7 @@ import PostForm from '../components/PostForm';
 import io from 'socket.io-client';
 import '../styles/Dashboard.css';
 
-const socket = io('http://localhost:5000');
+const socket = io('http://localhost');
 
 const Dashboard = () => {
   const [posts, setPosts] = useState([]);
@@ -80,23 +80,34 @@ const Dashboard = () => {
 
   const markNotificationAsRead = async (notificationId) => {
     try {
-      await API.patch(`/notifications/${notificationId}/read`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setNotifications((prev) =>
-        prev.map((notif) =>
-          notif._id === notificationId ? { ...notif, read: true } : notif
-        )
-      );
-      setShowNotificationDot(notifications.some((notif) => !notif.read));
+      console.log('Marking notification as read:', notificationId);
+      const response = await API.patch(`/notifications/${notificationId}/read`);
+      console.log('Notification marked read response:', response);
+      
+      setNotifications(prev => prev.map(n => 
+        n._id === notificationId ? { ...n, read: true } : n
+      ));
     } catch (error) {
-      console.error("Error marking notification as read:", error);
+      console.error("Error marking notification as read:", error.response?.data || error.message);
     }
   };
 
-  const handleViewPostFromNotification = async (postId, notificationId) => {
-    handleViewPost(postId);
-    await markNotificationAsRead(notificationId);
+  const handleViewPostFromNotification = async (notification, notificationId) => {
+    const postId = notification.postId?._id || notification.postId;
+    
+    console.log('Post ID from notification:', postId);
+  
+    if (!postId) {
+      console.error('Invalid post ID in notification', notification);
+      return;
+    }
+  
+    try {
+      await markNotificationAsRead(notificationId);
+      await handleViewPost(postId);
+    } catch (error) {
+      console.error("Error handling notification view:", error);
+    }
   };
 
   const handleViewPost = async (postId) => {
@@ -108,6 +119,25 @@ const Dashboard = () => {
         const { data } = await API.get(`/posts/${postId}`);
         setExpandedPostId(postId);
         setExpandedPostContent(data);
+  
+        // Find and mark related notifications as read
+        const relatedNotifications = notifications.filter(
+          notification => notification.postId?._id === postId || notification.postId === postId
+        );
+  
+        for (const notification of relatedNotifications) {
+          await markNotificationAsRead(notification._id);
+        }
+  
+        // Update state to remove read notifications
+        setNotifications(prev => 
+          prev.filter(n => !relatedNotifications.some(rn => rn._id === n._id))
+        );
+  
+        // Check if no unread notifications remain
+        const remainingUnreadNotifications = notifications.filter(n => !n.read);
+        setShowNotificationDot(remainingUnreadNotifications.length > 0);
+  
       } catch (error) {
         console.error("Error fetching post details:", error);
       }
@@ -149,12 +179,12 @@ const Dashboard = () => {
                 }`}
               >
                 <p style={{ color: notification.read ? 'green' : 'red' }}>
-                  Posted by: {notification.postId.author?.username || "Author Unknown"}
+                  Posted by: {notification.authorUsername || "Author Unknown"}
                 </p>
                 <button
                   onClick={() =>
                     handleViewPostFromNotification(
-                      notification.postId._id,
+                      notification,
                       notification._id
                     )
                   }

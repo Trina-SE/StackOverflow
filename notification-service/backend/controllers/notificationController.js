@@ -1,3 +1,4 @@
+//notification-service/backend/controllers/notificationController.js
 const Notification = require('../models/Notification');
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
@@ -18,8 +19,8 @@ async function fetchPostDetails(postId) {
     });
     return postResponse.data;
   } catch (error) {
-    console.error('Error fetching post details:', error);
-    throw error;
+    console.error('Error fetching post details:', error.message);
+    return null; // Return null instead of throwing error
   }
 }
 
@@ -27,19 +28,15 @@ async function fetchPostDetails(postId) {
 exports.getUnreadNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({ userId: req.userId, read: false });
-
+    
     const enrichedNotifications = await Promise.all(
       notifications.map(async (notification) => {
-        try {
-          const post = await fetchPostDetails(notification.postId);
-          return {
-            ...notification._doc,
-            post,
-          };
-        } catch (error) {
-          console.error(`Error fetching post details for postId: ${notification.postId}`, error);
-          return notification;
-        }
+        const post = await fetchPostDetails(notification.postId);
+        
+        return {
+          ...notification._doc,
+          post: post || null, // Ensure post is null if fetch fails
+        };
       })
     );
 
@@ -49,7 +46,6 @@ exports.getUnreadNotifications = async (req, res) => {
     res.status(500).json({ error: 'Server error fetching notifications' });
   }
 };
-
 // Function to mark a notification as read
 exports.markNotificationAsRead = async (req, res) => {
   const { notificationId } = req.params;
@@ -82,6 +78,7 @@ exports.createNotifications = async (req, res) => {
       .map((user) => ({
         userId: user._id,
         postId,
+        authorUsername,
         read: false,
       }));
 
