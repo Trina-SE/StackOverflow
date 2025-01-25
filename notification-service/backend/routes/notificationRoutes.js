@@ -1,10 +1,9 @@
-//notification-service/backend/routes/notificationRoutes.js
 const express = require('express');
 const {
   getUnreadNotifications,
   markNotificationAsRead,
   createNotifications,
-} = require('../controllers/notificationController');
+} = require('../controllers/notificationController'); // Ensure this import is correct
 const authMiddleware = require('../config/authMiddleware');
 
 const router = express.Router();
@@ -13,9 +12,9 @@ const router = express.Router();
 router.get('/unread', authMiddleware, getUnreadNotifications);
 
 // Route to mark a notification as read
-
+router.patch('/:notificationId/read', authMiddleware, markNotificationAsRead);
 
 // Route to create notifications for a new post
-router.post('/notify', createNotifications);
+router.post('/notify', createNotifications); // Fix here: ensure `createNotifications` is correctly imported
 
 module.exports = router;

@@ -1,11 +1,10 @@
-//notification-service/backend/controllers/notificationController.js
 const Notification = require('../models/Notification');
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
 
 function generateServiceToken() {
   return jwt.sign(
-    { service: 'notification-service' }, 
+    { service: 'notification-service' },
     process.env.INTER_SERVICE_JWT_SECRET,
     { expiresIn: '1h' }
   );
@@ -14,39 +13,33 @@ function generateServiceToken() {
 async function fetchPostDetails(postId) {
   const serviceToken = generateServiceToken();
   try {
-    const postResponse = await axios.get(`${process.env.POST_SERVICE_URL}/api/posts/${postId}`, {
-      headers: { 'Authorization': `Bearer ${serviceToken}` }
+    const response = await axios.get(`${process.env.POST_SERVICE_URL}/api/posts/${postId}`, {
+      headers: { Authorization: `Bearer ${serviceToken}` },
     });
-    return postResponse.data;
+    return response.data;
   } catch (error) {
     console.error('Error fetching post details:', error.message);
-    return null; // Return null instead of throwing error
+    return null;
   }
 }
 
-// Function to get unread notifications
 exports.getUnreadNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({ userId: req.userId, read: false });
-    
     const enrichedNotifications = await Promise.all(
       notifications.map(async (notification) => {
         const post = await fetchPostDetails(notification.postId);
-        
-        return {
-          ...notification._doc,
-          post: post || null, // Ensure post is null if fetch fails
-        };
+        return { ...notification._doc, post };
       })
     );
 
     res.json(enrichedNotifications);
   } catch (error) {
-    console.error("Error fetching unread notifications:", error);
-    res.status(500).json({ error: 'Server error fetching notifications' });
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 };
-// Function to mark a notification as read
+
 exports.markNotificationAsRead = async (req, res) => {
   const { notificationId } = req.params;
   try {
@@ -60,12 +53,11 @@ exports.markNotificationAsRead = async (req, res) => {
     }
     res.json(notification);
   } catch (error) {
-    console.error("Error marking notification as read:", error);
-    res.status(500).json({ error: 'Server error marking notification as read' });
+    console.error('Error marking notification as read:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 };
 
-// Function to create notifications for new posts
 exports.createNotifications = async (req, res) => {
   const { postId, authorUsername } = req.body;
 
@@ -78,7 +70,6 @@ exports.createNotifications = async (req, res) => {
       .map((user) => ({
         userId: user._id,
         postId,
-        authorUsername,
         read: false,
       }));
 
@@ -86,7 +77,8 @@ exports.createNotifications = async (req, res) => {
 
     res.status(201).json({ message: 'Notifications created successfully' });
   } catch (error) {
-    console.error("Error creating notifications:", error.message);
+    console.error('Error creating notifications:', error.message);
     res.status(500).json({ error: 'Failed to create notifications' });
   }
 };
+
