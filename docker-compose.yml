@@ -48,6 +48,7 @@ services:
     ports:
       - "4001:4001"
     environment:
+      INTER_SERVICE_JWT_SECRET: trina
       MONGO_URI: mongodb+srv://sultanatrina4209:x8coPVxjajSZc0El@cluster0.pmn1y.mongodb.net/stack_posts?retryWrites=true&w=majority
       MINIO_ENDPOINT: minio
       MINIO_PORT: 9000
@@ -71,9 +72,11 @@ services:
     ports:
       - "4002:4002"
     environment:
+      INTER_SERVICE_JWT_SECRET: trina
       MONGO_URI: mongodb+srv://sultanatrina4209:x8coPVxjajSZc0El@cluster0.pmn1y.mongodb.net/stack_notifications?retryWrites=true&w=majority
       JWT_SECRET: trina
       PORT: 4002
+      POST_SERVICE_URL: http://post-service:4001
     depends_on:
       - mongo
     networks:

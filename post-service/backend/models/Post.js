@@ -5,9 +5,11 @@ const postSchema = new mongoose.Schema({
   language: { type: String },
   codeFileUrl: { type: String },
   uploadedFileUrl: { type: String },
-  author: { type: mongoose.Schema.Types.ObjectId, required: true },
+  author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  authorUsername: { type: String, required: true }, // Add this back
   createdAt: { type: Date, default: Date.now },
-  // authorUsername: { type: String, required: true }, // Include author's username
-});
+  },
+
+);
 
 module.exports = mongoose.model('Post', postSchema);

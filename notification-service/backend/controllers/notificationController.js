@@ -1,26 +1,44 @@
 const Notification = require('../models/Notification');
 const axios = require('axios');
+const jwt = require('jsonwebtoken');
+
+function generateServiceToken() {
+  return jwt.sign(
+    { service: 'notification-service' }, 
+    process.env.INTER_SERVICE_JWT_SECRET,
+    { expiresIn: '1h' }
+  );
+}
+
+async function fetchPostDetails(postId) {
+  const serviceToken = generateServiceToken();
+  try {
+    const postResponse = await axios.get(`${process.env.POST_SERVICE_URL}/api/posts/${postId}`, {
+      headers: { 'Authorization': `Bearer ${serviceToken}` }
+    });
+    return postResponse.data;
+  } catch (error) {
+    console.error('Error fetching post details:', error);
+    throw error;
+  }
+}
 
 // Function to get unread notifications
 exports.getUnreadNotifications = async (req, res) => {
   try {
-    // Fetch notifications from the database
     const notifications = await Notification.find({ userId: req.userId, read: false });
 
-    // Enrich notifications by calling `post-service` to fetch post and author details
     const enrichedNotifications = await Promise.all(
       notifications.map(async (notification) => {
         try {
-          const postServiceUrl = `${process.env.POST_SERVICE_URL}/api/posts/${notification.postId}`;
-          const { data: post } = await axios.get(postServiceUrl);
-
+          const post = await fetchPostDetails(notification.postId);
           return {
             ...notification._doc,
-            post, // Include post details
+            post,
           };
         } catch (error) {
           console.error(`Error fetching post details for postId: ${notification.postId}`, error);
-          return notification; // Fallback to the original notification if post fetch fails
+          return notification;
         }
       })
     );

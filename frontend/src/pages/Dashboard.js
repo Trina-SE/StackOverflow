@@ -1,3 +1,4 @@
+//frontend/src/pages/Dashboard.js
 import React, { useEffect, useState } from 'react';
 import API from '../api';
 import PostForm from '../components/PostForm';
@@ -23,6 +24,7 @@ const Dashboard = () => {
       const { data } = await API.get('/posts', {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log('Posts data:', data); // Add this line
       setPosts(data);
     } catch (error) {
       console.error('Error fetching posts:', error);

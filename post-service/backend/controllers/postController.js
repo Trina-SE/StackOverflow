@@ -74,10 +74,17 @@ exports.createPost = async (req, res) => {
 // Function to get all posts
 exports.getPosts = async (req, res) => {
   try {
-    const posts = await Post.find()
-      .sort({ createdAt: -1 })
-      .populate('author', 'username');
-    res.json(posts);
+    const posts = await Post.find().sort({ createdAt: -1 });
+    
+    // Map to ensure authorUsername is directly on the post object
+    const postsWithAuthors = posts.map(post => ({
+      ...post.toObject(),
+      author: {
+        username: post.authorUsername // Use the stored authorUsername
+      }
+    }));
+
+    res.json(postsWithAuthors);
   } catch (error) {
     console.error("Error in getPosts:", error);
     res.status(500).json({ error: error.message });
@@ -87,31 +94,55 @@ exports.getPosts = async (req, res) => {
 // Function to get a specific post by ID, including file content from MinIO
 exports.getPostById = async (req, res) => {
   const { postId } = req.params;
+  if (!postId || postId === 'undefined') {
+    return res.status(400).json({ error: 'Invalid post ID' });
+  }
   try {
-    const post = await Post.findById(postId).populate('author', 'username');
+    const post = await Post.findById(postId);
     if (!post) {
       return res.status(404).json({ error: 'Post not found' });
     }
 
+    // Fetch author details
+    let authorUsername = 'Unknown';
+    try {
+      const userServiceUrl = `${process.env.USER_SERVICE_URL}/api/auth/user/${post.author}`;
+      const { data: author } = await axios.get(userServiceUrl);
+      authorUsername = author.username;
+    } catch (authorError) {
+      console.error(`Error fetching author for post ${postId}:`, authorError);
+    }
+
+    // Rest of your existing code for file retrieval...
     let codeContent = null;
     let uploadedFileContent = null;
 
-    // Retrieve code file content if available
-    if (post.codeFileUrl) {
-      const codeFileName = post.codeFileUrl.split('/').pop();
-      const codeFileStream = await minioClient.getObject(process.env.MINIO_BUCKET, codeFileName);
-      codeContent = await streamToString(codeFileStream);
+    // Add error handling for file retrievals
+    try {
+      if (post.codeFileUrl) {
+        const codeFileName = post.codeFileUrl.split('/').pop();
+        const codeFileStream = await minioClient.getObject(process.env.MINIO_BUCKET, codeFileName);
+        codeContent = await streamToString(codeFileStream);
+      }
+    } catch (fileError) {
+      console.error('Error retrieving code file:', fileError);
     }
 
-    // Retrieve uploaded file content if available
-    if (post.uploadedFileUrl) {
-      const uploadedFileName = post.uploadedFileUrl.split('/').pop();
-      const uploadedFileStream = await minioClient.getObject(process.env.MINIO_BUCKET, uploadedFileName);
-      uploadedFileContent = await streamToString(uploadedFileStream);
+    try {
+      if (post.uploadedFileUrl) {
+        const uploadedFileName = post.uploadedFileUrl.split('/').pop();
+        const uploadedFileStream = await minioClient.getObject(process.env.MINIO_BUCKET, uploadedFileName);
+        uploadedFileContent = await streamToString(uploadedFileStream);
+      }
+    } catch (fileError) {
+      console.error('Error retrieving uploaded file:', fileError);
     }
 
     res.json({
-      post,
+      post: {
+        ...post.toObject(),
+        authorUsername
+      },
       codeContent,
       uploadedFileContent,
     });
