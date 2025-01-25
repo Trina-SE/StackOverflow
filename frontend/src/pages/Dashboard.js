@@ -151,6 +151,7 @@ const Dashboard = () => {
                 <p style={{ color: notification.read ? "green" : "red" }}>
                   Posted by: {notification.post?.authorUsername || "Author Unknown"}
                 </p>
+                <p>{notification.post?.title}</p>
                 <button
                   onClick={() =>
                     handleViewPostFromNotification(notification)

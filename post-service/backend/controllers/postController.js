@@ -104,21 +104,27 @@ exports.getPostById = async (req, res) => {
       return res.status(404).json({ error: 'Post not found' });
     }
 
-    // Fetch author details
+    // Initialize authorUsername as 'Unknown'
     let authorUsername = 'Unknown';
-    try {
-      const userServiceUrl = `${process.env.USER_SERVICE_URL}/api/auth/user/${post.author}`;
-      const { data: author } = await axios.get(userServiceUrl);
-      authorUsername = author.username;
-    } catch (authorError) {
-      console.error(`Error fetching author for post ${postId}:`, authorError);
+
+    // Attempt to fetch author details
+    if (post.author) {
+      try {
+        const userServiceUrl = `${process.env.USER_SERVICE_URL}/api/auth/user/${post.author}`;
+        const { data: author } = await axios.get(userServiceUrl);
+
+        if (author && author.username) {
+          authorUsername = author.username;
+        }
+      } catch (authorError) {
+        console.error(`Error fetching author for post ${postId}:`, authorError.message);
+      }
     }
 
-    // Rest of your existing code for file retrieval...
+    // Fetch file content from MinIO (if applicable)
     let codeContent = null;
     let uploadedFileContent = null;
 
-    // Add error handling for file retrievals
     try {
       if (post.codeFileUrl) {
         const codeFileName = post.codeFileUrl.split('/').pop();
@@ -126,7 +132,7 @@ exports.getPostById = async (req, res) => {
         codeContent = await streamToString(codeFileStream);
       }
     } catch (fileError) {
-      console.error('Error retrieving code file:', fileError);
+      console.error('Error retrieving code file:', fileError.message);
     }
 
     try {
@@ -136,19 +142,19 @@ exports.getPostById = async (req, res) => {
         uploadedFileContent = await streamToString(uploadedFileStream);
       }
     } catch (fileError) {
-      console.error('Error retrieving uploaded file:', fileError);
+      console.error('Error retrieving uploaded file:', fileError.message);
     }
 
     res.json({
       post: {
         ...post.toObject(),
-        authorUsername
+        authorUsername, // Include the resolved authorUsername
       },
       codeContent,
       uploadedFileContent,
     });
   } catch (error) {
-    console.error("Error in getPostById:", error);
-    res.status(500).json({ error: error.message });
+    console.error("Error in getPostById:", error.message);
+    res.status(500).json({ error: 'Server error' });
   }
 };

@@ -16,12 +16,14 @@ async function fetchPostDetails(postId) {
     const response = await axios.get(`${process.env.POST_SERVICE_URL}/api/posts/${postId}`, {
       headers: { Authorization: `Bearer ${serviceToken}` },
     });
-    return response.data;
+    const post = response.data?.post;
+    return post ? { ...post, authorUsername: post.authorUsername } : null;
   } catch (error) {
     console.error('Error fetching post details:', error.message);
     return null;
   }
 }
+
 
 exports.getUnreadNotifications = async (req, res) => {
   try {
@@ -81,4 +83,3 @@ exports.createNotifications = async (req, res) => {
     res.status(500).json({ error: 'Failed to create notifications' });
   }
 };
-
