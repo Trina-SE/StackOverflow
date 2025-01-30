@@ -1,0 +1,5 @@
+docker exec -it minio sh
+mc alias set myminio http://localhost:9000 minioadmin minioadmin
+mc ls myminio
+mc ls myminio/stack
+ls -lah /data/stack - check files
