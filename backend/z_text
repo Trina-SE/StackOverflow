@@ -1,1 +1,5 @@
+Go to C drive then open in terminal. then give this command. In C drive give the command.
 .\minio.exe server C:\minio --console-address :9001
+
+mongo pass: x8coPVxjajSZc0El
+MONGO_URI="mongodb+srv://sultanatrina4209:fSpWfX3Sgntz0b1X@cluster0.bmhvg.mongodb.net/StackOverflow"

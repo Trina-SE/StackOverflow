@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:5.0
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - stackoverflow-network
+
+  minio:
+    image: minio/minio
+    container_name: minio
+    command: server /data
+    ports:
+      - "9000:9000"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    networks:
+      - stackoverflow-network
+
+  user-service:
+    build:
+      context: ./user-service/backend
+    container_name: user-service
+    ports:
+      - "4000:4000"
+    environment:
+      MONGO_URI: mongodb+srv://sultanatrina4209:x8coPVxjajSZc0El@cluster0.pmn1y.mongodb.net/stack_users?retryWrites=true&w=majority
+      JWT_SECRET: trina
+      PORT: 4000
+    depends_on:
+      - mongo
+    networks:
+      - stackoverflow-network
+
+  post-service:
+    build:
+      context: ./post-service/backend
+    container_name: post-service
+    ports:
+      - "4001:4001"
+    environment:
+      INTER_SERVICE_JWT_SECRET: trina
+      MONGO_URI: mongodb+srv://sultanatrina4209:x8coPVxjajSZc0El@cluster0.pmn1y.mongodb.net/stack_posts?retryWrites=true&w=majority
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_BUCKET: stack
+      JWT_SECRET: trina
+      PORT: 4001
+      USER_SERVICE_URL: http://user-service:4000
+      NOTIFICATION_SERVICE_URL: http://notification-service:4002
+    depends_on:
+      - mongo
+      - minio
+    networks:
+      - stackoverflow-network
+
+  notification-service:
+    build:
+      context: ./notification-service/backend
+    container_name: notification-service
+    ports:
+      - "4002:4002"
+    environment:
+      INTER_SERVICE_JWT_SECRET: trina
+      MONGO_URI: mongodb+srv://sultanatrina4209:x8coPVxjajSZc0El@cluster0.pmn1y.mongodb.net/stack_notifications?retryWrites=true&w=majority
+      JWT_SECRET: trina
+      PORT: 4002
+      POST_SERVICE_URL: http://post-service:4001
+    depends_on:
+      - mongo
+    networks:
+      - stackoverflow-network
+
+  nginx:
+    build:
+      context: ./nginx
+    container_name: nginx
+    ports:
+      - "90:90"
+    depends_on:
+      - user-service
+      - post-service
+      - notification-service
+    networks:
+      - stackoverflow-network
+
+volumes:
+  mongo-data:
+
+networks:
+  stackoverflow-network:
+    driver: bridge

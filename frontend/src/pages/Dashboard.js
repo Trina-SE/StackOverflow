@@ -1,10 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import API from '../api';
-import PostForm from '../components/PostForm';
-import io from 'socket.io-client';
-import '../styles/Dashboard.css';
-
-const socket = io('http://localhost:5000');
+import React, { useEffect, useState } from "react";
+import API from "../api";
+import PostForm from "../components/PostForm";
+import "../styles/Dashboard.css";
 
 const Dashboard = () => {
   const [posts, setPosts] = useState([]);
@@ -15,26 +12,28 @@ const Dashboard = () => {
   const [expandedPostContent, setExpandedPostContent] = useState(null);
   const [showNotificationsPrompt, setShowNotificationsPrompt] = useState(false);
 
-  const username = localStorage.getItem('username');
-  const token = localStorage.getItem('token');
+  const username = localStorage.getItem("username");
+  const token = localStorage.getItem("token");
 
   const fetchPosts = async () => {
     try {
-      const { data } = await API.get('/posts', {
+      const { data } = await API.get("/posts", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setPosts(data);
     } catch (error) {
-      console.error('Error fetching posts:', error);
+      console.error("Error fetching posts:", error);
     }
   };
 
   const fetchUnreadNotifications = async () => {
     try {
-      const { data } = await API.get('/notifications/unread', {
+      const { data } = await API.get("/notifications/unread", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setNotifications(data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+      setNotifications(
+        data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      );
       setShowNotificationDot(data.some((notif) => !notif.read));
     } catch (error) {
       console.error("Error fetching notifications:", error);
@@ -46,22 +45,11 @@ const Dashboard = () => {
     fetchUnreadNotifications();
 
     const intervalId = setInterval(() => {
-      fetchPosts();
       fetchUnreadNotifications();
-    }, 2000); // Auto-refresh every 2 seconds
+    }, 2000); // Refresh every 2 seconds
 
-    socket.on('newPostNotification', (notification) => {
-      if (notification.authorUsername !== username) {
-        setNotifications((prev) => [notification, ...prev]);
-        setShowNotificationDot(true);
-      }
-    });
-
-    return () => {
-      clearInterval(intervalId); // Clean up interval on component unmount
-      socket.off('newPostNotification');
-    };
-  }, [username]);
+    return () => clearInterval(intervalId);
+  }, []);
 
   const handlePostCreated = () => {
     fetchPosts();
@@ -92,9 +80,20 @@ const Dashboard = () => {
     }
   };
 
-  const handleViewPostFromNotification = async (postId, notificationId) => {
-    handleViewPost(postId);
-    await markNotificationAsRead(notificationId);
+  const handleViewPostFromNotification = async (notification) => {
+    const postId = notification.postId?._id || notification.postId;
+
+    if (!postId) {
+      console.error("Invalid post ID in notification");
+      return;
+    }
+
+    try {
+      await markNotificationAsRead(notification._id);
+      handleViewPost(postId);
+    } catch (error) {
+      console.error("Error handling notification view:", error);
+    }
   };
 
   const handleViewPost = async (postId) => {
@@ -113,13 +112,14 @@ const Dashboard = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
-    window.location.href = '/';
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    window.location.href = "/";
   };
 
   return (
     <div className="dashboard">
+      {/* Dashboard Header */}
       <div className="dashboard-header">
         <div className="username-box">
           <span>{username}</span>
@@ -133,8 +133,10 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Post Form */}
       {showPostForm && <PostForm onPostCreated={handlePostCreated} />}
 
+      {/* Notifications Prompt */}
       {showNotificationsPrompt && (
         <div className="notifications-prompt">
           <h4>Unread Notifications</h4>
@@ -143,18 +145,16 @@ const Dashboard = () => {
               <div
                 key={notification._id}
                 className={`notification-item ${
-                  notification.read ? 'notification-read' : 'notification-unread'
+                  notification.read ? "notification-read" : "notification-unread"
                 }`}
               >
-                <p style={{ color: notification.read ? 'green' : 'red' }}>
-                  Posted by: {notification.postId.author?.username || "Author Unknown"}
+                <p style={{ color: notification.read ? "green" : "red" }}>
+                  Posted by: {notification.post?.authorUsername || "Author Unknown"}
                 </p>
+                <p>{notification.post?.title}</p>
                 <button
                   onClick={() =>
-                    handleViewPostFromNotification(
-                      notification.postId._id,
-                      notification._id
-                    )
+                    handleViewPostFromNotification(notification)
                   }
                 >
                   View Post
@@ -164,18 +164,24 @@ const Dashboard = () => {
           ) : (
             <p>No unread notifications</p>
           )}
-          <button onClick={toggleNotificationsPrompt} className="close-prompt-button">
+          <button
+            onClick={toggleNotificationsPrompt}
+            className="close-prompt-button"
+          >
             Close
           </button>
         </div>
       )}
 
+      {/* Posts List */}
       <div className="posts-container">
         <h2>Recent Posts</h2>
         {posts.length > 0 ? (
           posts.map((post) => (
             <div key={post._id} className="post-item">
-              <p className="author-name">Posted by: {post.author?.username || "Anonymous"}</p>
+              <p className="author-name">
+                Posted by: {post.author?.username || "Anonymous"}
+              </p>
               <h3>{post.title}</h3>
               <br />
               <button onClick={() => handleViewPost(post._id)}>
@@ -184,19 +190,30 @@ const Dashboard = () => {
 
               {expandedPostId === post._id && expandedPostContent && (
                 <div className="post-details">
-                  <h4><u>Post Details:</u></h4>
-                  <p><u><strong>Language:</strong> {expandedPostContent.post.language || 'N/A'}</u></p>
-                  
+                  <h4>
+                    <u>Post Details:</u>
+                  </h4>
+                  <p>
+                    <u>
+                      <strong>Language:</strong>{" "}
+                      {expandedPostContent.post.language || "N/A"}
+                    </u>
+                  </p>
+
                   {expandedPostContent.codeContent && (
                     <div>
-                      <strong><u>Code Snippet:</u></strong>
+                      <strong>
+                        <u>Code Snippet:</u>
+                      </strong>
                       <pre>{expandedPostContent.codeContent}</pre>
                     </div>
                   )}
 
                   {expandedPostContent.uploadedFileContent && (
                     <div>
-                      <strong><u>Uploaded File Content:</u></strong>
+                      <strong>
+                        <u>Uploaded File Content:</u>
+                      </strong>
                       <pre>{expandedPostContent.uploadedFileContent}</pre>
                     </div>
                   )}
@@ -209,7 +226,10 @@ const Dashboard = () => {
         )}
       </div>
 
-      <button className="logout-button" onClick={handleLogout}>Logout</button>
+      {/* Logout Button */}
+      <button className="logout-button" onClick={handleLogout}>
+        Logout
+      </button>
     </div>
   );
 };
