@@ -1,31 +1,4 @@
-version: '3.8'
-
 services:
-  mongo:
-    image: mongo:5.0
-    container_name: mongo
-    ports:
-      - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
-    volumes:
-      - mongo-data:/data/db
-    networks:
-      - stackoverflow-network
-
-  minio:
-    image: minio/minio
-    container_name: minio
-    command: server /data
-    ports:
-      - "9000:9000"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    networks:
-      - stackoverflow-network
-
   user-service:
     build:
       context: ./user-service/backend
@@ -33,11 +6,11 @@ services:
     ports:
       - "4000:4000"
     environment:
-      MONGO_URI: mongodb+srv://sultanatrina4209:x8coPVxjajSZc0El@cluster0.pmn1y.mongodb.net/stack_users?retryWrites=true&w=majority
+      MONGO_URI: mongodb://user-db:27017/user-service     
       JWT_SECRET: trina
       PORT: 4000
     depends_on:
-      - mongo
+      - user-db
     networks:
       - stackoverflow-network
 
@@ -49,7 +22,7 @@ services:
       - "4001:4001"
     environment:
       INTER_SERVICE_JWT_SECRET: trina
-      MONGO_URI: mongodb+srv://sultanatrina4209:x8coPVxjajSZc0El@cluster0.pmn1y.mongodb.net/stack_posts?retryWrites=true&w=majority
+      MONGO_URI: mongodb://post-db:27017/post-service 
       MINIO_ENDPOINT: minio
       MINIO_PORT: 9000
       MINIO_ROOT_USER: minioadmin
@@ -60,7 +33,7 @@ services:
       USER_SERVICE_URL: http://user-service:4000
       NOTIFICATION_SERVICE_URL: http://notification-service:4002
     depends_on:
-      - mongo
+      - post-db
       - minio
     networks:
       - stackoverflow-network
@@ -73,12 +46,42 @@ services:
       - "4002:4002"
     environment:
       INTER_SERVICE_JWT_SECRET: trina
-      MONGO_URI: mongodb+srv://sultanatrina4209:x8coPVxjajSZc0El@cluster0.pmn1y.mongodb.net/stack_notifications?retryWrites=true&w=majority
+      MONGO_URI: mongodb://notif-db:27017/notification-service     
       JWT_SECRET: trina
       PORT: 4002
       POST_SERVICE_URL: http://post-service:4001
     depends_on:
-      - mongo
+      - notif-db
+    networks:
+      - stackoverflow-network
+
+  user-db:
+    image: mongo:latest
+    container_name: user-db
+    ports:
+      - "27020:27017"
+    volumes:
+      - user-data:/data/db
+    networks:
+      - stackoverflow-network
+
+  post-db:
+    image: mongo:latest
+    container_name: post-db
+    ports:
+      - "27018:27017"
+    volumes:
+      - post-data:/data/db
+    networks:
+      - stackoverflow-network
+
+  notif-db:
+    image: mongo:latest
+    container_name: notif-db
+    ports:
+      - "27019:27017"
+    volumes:
+      - notif-data:/data/db
     networks:
       - stackoverflow-network
 
@@ -95,9 +98,27 @@ services:
     networks:
       - stackoverflow-network
 
+  minio:
+    image: minio/minio
+    container_name: minio
+    command: server /data
+    ports:
+      - "9001:9000"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio-data:/data  
+    networks:
+      - stackoverflow-network
+
 volumes:
-  mongo-data:
+  user-data:
+  post-data:
+  notif-data:
+  minio-data:
 
 networks:
   stackoverflow-network:
     driver: bridge
+    external: true
